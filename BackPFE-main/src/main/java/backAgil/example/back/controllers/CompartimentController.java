@@ -1,6 +1,9 @@
 package backAgil.example.back.controllers;
 
+import backAgil.example.back.models.Citerne;
 import backAgil.example.back.models.Compartiment;
+import backAgil.example.back.repositories.CiterneRepository;
+import backAgil.example.back.services.CiterneService;
 import backAgil.example.back.services.CompartimentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,6 +21,11 @@ public class CompartimentController {
     @Autowired
     private CompartimentService compartimentService;
 
+    @Autowired
+    private CiterneRepository citerneRepository;
+    @Autowired
+    private CiterneService citerneService;
+
     @GetMapping
     public List<Compartiment> getAllCompartiments() {
         return compartimentService.getAllCompartiments();
@@ -29,30 +37,29 @@ public class CompartimentController {
         return compartiment.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-
     @GetMapping("/citerne/{citerneId}")
-    public List<Compartiment> getCompartimentsByCiterneId(@PathVariable Long citerneId) {
-        return compartimentService.getCompartimentsByCiterneId(citerneId);
-    }
-
-
-    @PostMapping
-    public ResponseEntity<?> addCompartiment(@RequestBody Compartiment compartiment) {
+    public ResponseEntity<List<Compartiment>> getCompartimentsByCiterneId(@PathVariable Long citerneId) {
         try {
-            if (compartiment.getCiterne() != null && compartiment.getCiterne().getId() == null) {
-                compartiment.setCiterne(null);  // Si citerneId est nul, on la supprime.
-            }
-            // Appel à la logique de service pour ajouter un compartiment
-            Compartiment savedCompartiment = compartimentService.addCompartiment(compartiment);
-            return ResponseEntity.ok(savedCompartiment); // Retourner le compartiment ajouté
+            List<Compartiment> compartiments = compartimentService.getCompartimentsByCiterneId(citerneId);
+            return ResponseEntity.ok(compartiments);
         } catch (IllegalArgumentException e) {
-            // Retourner une erreur 400 si la validation échoue
-            return ResponseEntity.badRequest().body("Erreur : " + e.getMessage());
-        } catch (Exception e) {
-            // En cas d'erreur inconnue, retourner une erreur générique
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur interne");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);  // Erreur côté client
         }
     }
+
+    @PostMapping
+    public ResponseEntity<Compartiment> createCompartiment(@RequestBody Compartiment compartiment) {
+        try {
+            Compartiment createdCompartiment = compartimentService.addCompartiment(compartiment);
+            return ResponseEntity.ok(createdCompartiment);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null);  // Erreur côté client
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);  // Erreur interne
+        }
+    }
+
 
 
 
@@ -61,12 +68,12 @@ public class CompartimentController {
         try {
             Compartiment updatedCompartiment = compartimentService.updateCompartiment(id, compartiment);
             return ResponseEntity.ok(updatedCompartiment);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
-
-
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCompartiment(@PathVariable Long id) {
@@ -77,4 +84,16 @@ public class CompartimentController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @PostMapping("/{id}/add-compartiment")
+    public ResponseEntity<Compartiment> addCompartimentToCiterne(
+            @PathVariable Long id,
+            @RequestBody Compartiment compartiment
+    ) {
+        Compartiment result = citerneService.addCompartimentToCiterne(id, compartiment);
+        return ResponseEntity.ok(result);
+    }
+
+
+
 }
