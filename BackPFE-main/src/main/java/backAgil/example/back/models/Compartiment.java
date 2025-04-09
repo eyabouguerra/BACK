@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import org.antlr.v4.runtime.misc.NotNull;
-
 @Entity
 @Table(name = "compartiments")
 public class Compartiment {
@@ -18,7 +17,7 @@ public class Compartiment {
     @Column(name = "Capacite_Max", nullable = false)
     private double capaciteMax;
 
-    @Column(name = "Reference", nullable = false, unique = true)  // Ajout de la colonne Reference
+    @Column(name = "Reference", nullable = false, unique = true)
     private String reference;
 
     @Enumerated(EnumType.STRING)
@@ -28,14 +27,15 @@ public class Compartiment {
 
 
     @ManyToOne
-    @JsonBackReference // Utilisation de JsonBackReference pour éviter une boucle infinie de sérialisation
-    @JoinColumn(name = "citerne_id", nullable = false) // Citerne est obligatoire pour un compartiment
+    @JoinColumn(name = "citerne_id")
+    @JsonBackReference
     private Citerne citerne;
 
 
 
-    public Compartiment() {}
 
+
+    public Compartiment() {}
 
     public enum Statut {
         PLEIN,
@@ -43,20 +43,11 @@ public class Compartiment {
         VIDE;
     }
 
-    public Compartiment(Long id, double capaciteMax,  String reference, Statut statut, Citerne citerne) {
+    public Compartiment(Long id, double capaciteMax, String reference, Statut statut) {
         this.id = id;
         this.capaciteMax = capaciteMax;
-        this.statut = statut;
-        this.citerne = citerne;
         this.reference = reference;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
+        this.statut = statut;
     }
 
     public double getCapaciteMax() {
@@ -67,7 +58,21 @@ public class Compartiment {
         this.capaciteMax = capaciteMax;
     }
 
+    public Long getId() {
+        return id;
+    }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getReference() {
+        return reference;
+    }
+
+    public void setReference(String reference) {
+        this.reference = reference;
+    }
 
     public Statut getStatut() {
         return statut;
@@ -85,23 +90,22 @@ public class Compartiment {
         this.citerne = citerne;
     }
 
-    public String getReference() {
-        return reference;
-    }
-
-    public void setReference(String reference) {
+    public Compartiment(Long id, double capaciteMax, String reference, Statut statut, Citerne citerne) {
+        this.id = id;
+        this.capaciteMax = capaciteMax;
         this.reference = reference;
+        this.statut = statut;
+        this.citerne = citerne;
     }
-
 
     @Override
     public String toString() {
         return "Compartiment{" +
                 "id=" + id +
                 ", capaciteMax=" + capaciteMax +
+                ", reference='" + reference + '\'' +
                 ", statut=" + statut +
                 ", citerne=" + citerne +
-                ", reference='" + reference +
                 '}';
     }
 }
