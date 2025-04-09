@@ -1,5 +1,6 @@
 package backAgil.example.back.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
@@ -19,11 +20,9 @@ public class Citerne {
     private double capacite;
 
 
-    @OneToMany(mappedBy = "citerne", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "citerne")
     @JsonManagedReference
-    private List<Compartiment> compartiments = new ArrayList<>();
-
-
+    private List<Compartiment> compartiments;
 
 
 
@@ -74,7 +73,6 @@ public class Citerne {
         this.compartiments = compartiments;
     }
 
-
     @JsonIgnore
     public Camion getCamion() {
         return camion;
@@ -84,14 +82,15 @@ public class Citerne {
         this.camion = camion;
     }
 
+
     @Override
     public String toString() {
         return "Citerne{" +
                 "id=" + id +
                 ", reference='" + reference + '\'' +
                 ", capacite=" + capacite +
-                ", compartiments=" + compartiments +
-                ", camion=" + camion +
+                ", compartiments=" + compartiments.size() + " compartiments" +
                 '}';
     }
+
 }
