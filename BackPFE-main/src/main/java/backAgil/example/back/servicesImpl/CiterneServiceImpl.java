@@ -11,10 +11,10 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
 @Service
 public class CiterneServiceImpl implements CiterneService {
 
@@ -22,7 +22,6 @@ public class CiterneServiceImpl implements CiterneService {
     private CiterneRepository citerneRepository;
     @Autowired
     private CompartimentRepository compartimentRepository;
-
     @Autowired
     private EntityManager entityManager;
 
@@ -31,60 +30,51 @@ public class CiterneServiceImpl implements CiterneService {
         return citerneRepository.findAll();
     }
 
+
+
     @Override
     public Optional<Citerne> getCiterneById(Long id) {
         return citerneRepository.findById(id);
     }
 
-
-    @Transactional
-    public Citerne addCiterne(Citerne citerne) {
-        // Ensure only existing Compartiments are linked
-        List<Compartiment> compartiments = compartimentRepository.findAllById(
-                citerne.getCompartiments().stream()
-                        .map(Compartiment::getId)
-                        .collect(Collectors.toList())
-        );
-
-        // Check if any compartiment is not found
-        if (compartiments.size() != citerne.getCompartiments().size()) {
-            throw new IllegalArgumentException("Certain compartiments were not found.");
+    @Override
+    public Citerne addCiterne(Citerne citerneData) {
+        if (citerneData.getCompartiments().size() != citerneData.getNombreCompartiments()) {
+            throw new IllegalArgumentException("Le nombre de compartiments doit être exactement " + citerneData.getNombreCompartiments());
         }
 
-        citerne.setCompartiments(compartiments);
-        return citerneRepository.save(citerne);
+        // Lier les compartiments à la citerne
+        for (Compartiment c : citerneData.getCompartiments()) {
+            if (c.getId() != null) {
+                compartimentRepository.findById(c.getId())
+                        .ifPresent(compartiment -> compartiment.setCiterne(citerneData));
+            }
+        }
+
+        // Sauvegarder la citerne avec les compartiments liés
+        return citerneRepository.save(citerneData);
     }
 
-
-
     @Override
-    public Citerne updateCiterne(Long id, Citerne newCiterne) {
-        return citerneRepository.findById(id).map(citerne -> {
-            citerne.setReference(newCiterne.getReference());
-            citerne.setCapacite(newCiterne.getCapacite());
+    public Citerne updateCiterne(Long id, Citerne citerneData) {
+        Citerne citerne = citerneRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Citerne non trouvée"));
 
-            if (newCiterne.getCompartiments() != null) {
-                // Dissocier anciens compartiments
-                for (Compartiment c : citerne.getCompartiments()) {
-                    c.setCiterne(null);
-                    compartimentRepository.save(c);
-                }
+        citerne.setReference(citerneData.getReference());
+        citerne.setCapacite(citerneData.getCapacite());
 
-                // Associer les nouveaux compartiments
-                List<Compartiment> updatedCompartiments = newCiterne.getCompartiments().stream()
-                        .map(c -> {
-                            Compartiment existing = compartimentRepository.findById(c.getId())
-                                    .orElseThrow(() -> new EntityNotFoundException("Compartiment non trouvé"));
-                            existing.setCiterne(citerne);
-                            return compartimentRepository.save(existing);
-                        })
-                        .collect(Collectors.toList());
+        List<Compartiment> nouveauxCompartiments = new ArrayList<>();
 
-                citerne.setCompartiments(updatedCompartiments);
-            }
+        for (Compartiment c : citerneData.getCompartiments()) {
+            Compartiment compartiment = compartimentRepository.findById(c.getId())
+                    .orElseThrow(() -> new RuntimeException("Compartiment non trouvé"));
+            compartiment.setCiterne(citerne); // très important
+            nouveauxCompartiments.add(compartiment);
+        }
 
-            return citerneRepository.save(citerne);
-        }).orElseThrow(() -> new EntityNotFoundException("Citerne non trouvée avec l'id: " + id));
+        citerne.setCompartiments(nouveauxCompartiments);
+
+        return citerneRepository.save(citerne);
     }
 
 
@@ -105,6 +95,4 @@ public class CiterneServiceImpl implements CiterneService {
         compartiment.setCiterne(citerne);
         return compartimentRepository.save(compartiment);
     }
-
-
 }
