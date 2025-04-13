@@ -19,6 +19,8 @@ public class Citerne {
 
     private double capacite;
 
+    private int nombreCompartiments;
+
 
     @OneToMany(mappedBy = "citerne")
     @JsonManagedReference
@@ -33,11 +35,12 @@ public class Citerne {
 
     public Citerne() {}
 
-    public Citerne(Long id, String reference, List<Compartiment> compartiments, double capacite, Camion camion) {
+    public Citerne(Long id, String reference, List<Compartiment> compartiments, int nombreCompartiments, double capacite, Camion camion) {
         this.id = id;
         this.reference = reference;
         this.compartiments = compartiments;
         this.capacite = capacite;
+        this.nombreCompartiments = nombreCompartiments;
         this.camion = camion;
     }
 
@@ -73,6 +76,15 @@ public class Citerne {
         this.compartiments = compartiments;
     }
 
+    public int getNombreCompartiments() {
+        return nombreCompartiments;
+    }
+
+    public void setNombreCompartiments(int nombreCompartiments) {
+        this.nombreCompartiments = nombreCompartiments;
+    }
+
+
     @JsonIgnore
     public Camion getCamion() {
         return camion;
@@ -82,15 +94,15 @@ public class Citerne {
         this.camion = camion;
     }
 
-
     @Override
     public String toString() {
         return "Citerne{" +
                 "id=" + id +
                 ", reference='" + reference + '\'' +
                 ", capacite=" + capacite +
-                ", compartiments=" + compartiments.size() + " compartiments" +
+                ", nombreCompartiments=" + nombreCompartiments +
+                ", compartiments=" + compartiments +
+                ", camion=" + camion +
                 '}';
     }
-
 }
