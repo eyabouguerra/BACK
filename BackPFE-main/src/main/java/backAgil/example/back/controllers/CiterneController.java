@@ -8,19 +8,17 @@ import backAgil.example.back.services.CiterneService;
 import backAgil.example.back.services.CompartimentService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/citernes")
+
 @CrossOrigin("*")
 public class CiterneController {
 
@@ -35,60 +33,41 @@ public class CiterneController {
     @Autowired
     private EntityManager entityManager;
 
+
     @GetMapping
     public List<Citerne> getAllCiternes() {
         return citerneService.getAllCiternes();
     }
 
-    // Ajout d'une route pour récupérer les compartiments d'une citerne spécifique
-    @GetMapping("/{id}/compartiments")
-    public ResponseEntity<List<Compartiment>> getCompartimentsByCiterneId(@PathVariable Long id) {
-        Optional<Citerne> citerne = citerneService.getCiterneById(id);
-        if (citerne.isPresent()) {
-            List<Compartiment> compartiments = compartimentService.getCompartimentsByCiterneId(id);
-            return ResponseEntity.ok(compartiments);
-        } else {
-            return ResponseEntity.notFound().build(); // Citerne non trouvée
-        }
-    }
 
     @GetMapping("/{id}")
     public ResponseEntity<Citerne> getCiterneById(@PathVariable Long id) {
         Optional<Citerne> citerne = citerneService.getCiterneById(id);
-        if (citerne.isPresent()) {
-            return ResponseEntity.ok(citerne.get());
-        } else {
-            return ResponseEntity.notFound().build(); // Citerne non trouvée
-        }
+        return citerne.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
-
 
     @PostMapping()
-    public ResponseEntity<Citerne> addCiterne(@RequestBody Citerne citerne) {
-        List<Compartiment> compartiments = citerne.getCompartiments();
-
-        // Nettoyer la liste pour éviter des erreurs de persistance
-        citerne.setCompartiments(new ArrayList<>());
-
-        // Sauvegarder la citerne seule d’abord pour qu’elle ait un ID
-        Citerne savedCiterne = citerneRepository.save(citerne);
-
-        // Lier chaque compartiment à la nouvelle citerne
-        for (Compartiment c : compartiments) {
-            Compartiment existing = compartimentRepository.findById(c.getId()).orElse(null);
-            if (existing != null) {
-                existing.setCiterne(savedCiterne);
-                compartimentRepository.save(existing);
-            }
+    public ResponseEntity<?> addCiterne(@RequestBody Citerne citerne) {
+        if (citerne.getCompartiments().size() != citerne.getNombreCompartiments()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Le nombre de compartiments doit être exactement " + citerne.getNombreCompartiments());
         }
 
-        // Optionnel : récupérer la citerne avec les compartiments mis à jour
-        savedCiterne.setCompartiments(compartimentRepository.findByCiterneId(savedCiterne.getId()));
+        List<Compartiment> compartiments = citerne.getCompartiments();
 
-        return ResponseEntity.ok(savedCiterne);
+        // Sauvegarde de la citerne et association des compartiments
+        Citerne savedCiterne = citerneService.addCiterne(citerne);
+
+        // Lier les compartiments à la citerne
+        for (Compartiment compartiment : compartiments) {
+            compartiment.setCiterne(savedCiterne);  // Important: Lier chaque compartiment à la citerne
+        }
+
+        // Sauvegarder les compartiments après la liaison avec la citerne
+        compartimentRepository.saveAll(compartiments);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedCiterne);
     }
-
-
 
 
     @PutMapping("/{id}")
@@ -113,30 +92,5 @@ public class CiterneController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build(); // Citerne non trouvée
         }
     }
-
-
-    @Transactional
-    public Compartiment addCompartimentToCiterne(Long citerneId, Compartiment compartiment) {
-        Citerne citerne = citerneRepository.findById(citerneId)
-                .orElseThrow(() -> new IllegalArgumentException("Citerne not found"));
-
-        // Vérifier si le compartiment est détaché (n'a pas d'ID)
-        if (compartiment.getId() == null || !compartimentRepository.existsById(compartiment.getId())) {
-            // Si c'est un nouveau compartiment, il doit être sauvegardé dans la base
-            compartiment = compartimentRepository.save(compartiment);
-        } else {
-            // Si le compartiment est déjà persistant, il faut s'assurer qu'il est attaché à la session
-            compartiment = entityManager.merge(compartiment); // Merge au lieu de saveAndFlush
-        }
-
-        // Maintenant, lier le compartiment à la citerne
-        compartiment.setCiterne(citerne);
-
-        // Sauvegarder à nouveau le compartiment avec sa citerne associée
-        return compartimentRepository.save(compartiment);
-    }
-
-
-
-
 }
+
