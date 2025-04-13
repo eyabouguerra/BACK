@@ -39,7 +39,6 @@ public class Compartiment {
 
     public enum Statut {
         PLEIN,
-        EN_COURS,
         VIDE;
     }
 
