@@ -127,8 +127,23 @@ public class UserController {
             }
             user.setRole(userRoles);
 
+            // Sauvegarder le mot de passe avant chiffrement pour l'email
+            String plainPassword = request.getUserPassword();
+
             User registeredUser = userService.register(user);
-            return ResponseEntity.ok(registeredUser);
+
+            // Envoyer l'email avec les informations de connexion
+            emailService.sendWelcomeEmail(
+                    registeredUser.getEmail(),
+                    registeredUser.getUserFirstName() + " " + registeredUser.getUserLastName(),
+                    registeredUser.getUserName(),
+                    plainPassword
+            );
+
+            return ResponseEntity.ok(Map.of(
+                    "message", "Utilisateur créé avec succès. Un email avec les informations de connexion a été envoyé.",
+                    "user", registeredUser
+            ));
         } catch (RuntimeException e) {
             System.out.println("Exception: " + e.getMessage());
             return ResponseEntity
@@ -136,7 +151,6 @@ public class UserController {
                     .body("Erreur serveur : " + e.getMessage());
         }
     }
-
 
 
 
