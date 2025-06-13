@@ -18,11 +18,12 @@ public class GeocodingController {
     @GetMapping
     public Map<String, Double> getCoordinates(@RequestParam String address) {
         double[] coords = geocodingService.getCoordinates(address);
-
+            //cle,valeur
         Map<String, Double> response = new HashMap<>();
         response.put("latitude", coords[0]);
         response.put("longitude", coords[1]);
 
         return response;
     }
+
 }

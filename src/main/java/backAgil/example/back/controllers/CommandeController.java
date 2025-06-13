@@ -40,7 +40,11 @@ public class CommandeController {
     @Autowired
     private TypeProduitRepository typeProduitRepository;
 
-    // GET all commandes
+    @GetMapping
+    public List<Commande> getAll() {
+        return cService.getAllCommandes();
+    }
+
 
     @PreAuthorize("hasRole('User')")
     @GetMapping("/mesCommandes")
@@ -48,10 +52,7 @@ public class CommandeController {
         return cService.getCommandesByCurrentUser();
     }
 
-    @GetMapping
-    public List<Commande> getAll() {
-        return cService.getAllCommandes();
-    }
+
 
     // GET commande by ID
     @GetMapping("/{id}")
@@ -60,6 +61,7 @@ public class CommandeController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
 
     // CHECK if codeCommande exists
     @GetMapping("/check-code")
@@ -144,6 +146,7 @@ public class CommandeController {
                 .distinct()
                 .collect(Collectors.toList());
     }
+
 
     @PatchMapping("/{id}/statut")
     public ResponseEntity<?> updateCommandeStatut(@PathVariable("id") Long id, @RequestBody Map<String, String> statutMap) {

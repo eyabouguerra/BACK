@@ -34,7 +34,6 @@ public class Commande {
 
     @ManyToOne(fetch = FetchType.EAGER) // Changé de LAZY à EAGER pour charger le client
     @JoinColumn(name = "client_id")
-    // Suppression de @JsonBackReference pour permettre la sérialisation du client
     private Client client;
     @ManyToOne
     @JoinColumn(name = "user_id")

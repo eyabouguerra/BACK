@@ -26,7 +26,7 @@ public class WebSecurityConfiguration {
 
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtRequestFilter jwtRequestFilter;
-    private final JwtService jwtService;  // Injection directe de JwtService
+    private final JwtService jwtService;
     //constructeur qui donne les objet nessaire à utilser
     @Autowired
     public WebSecurityConfiguration(JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
@@ -46,7 +46,7 @@ public class WebSecurityConfiguration {
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/register", "/authenticate", "/roles","/request-reset","/reset-password",        // <- autorisé sans token
+                        .requestMatchers("/register", "/authenticate", "/roles","/request-reset","/reset-password",
                                 "/reset-password").permitAll()
                         .anyRequest().authenticated()
                 );
@@ -55,6 +55,7 @@ public class WebSecurityConfiguration {
         return http.build();
     }
 
+    //comment un user est connecte
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
@@ -65,6 +66,7 @@ public class WebSecurityConfiguration {
         return new BCryptPasswordEncoder();
     }
 
+    //verifier les identifiants du user
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
         authenticationManagerBuilder.userDetailsService(jwtService).passwordEncoder(passwordEncoder());

@@ -60,7 +60,7 @@ public class JwtService implements UserDetailsService {
 
     private Set<SimpleGrantedAuthority> getAuthorities(User user) {
         Set<SimpleGrantedAuthority> authorities = new HashSet<>();
-        if (user.getRole() != null) {  // <-- pluriel ici
+        if (user.getRole() != null) {
             user.getRole().forEach(role -> {
                 authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getRoleName()));
             });

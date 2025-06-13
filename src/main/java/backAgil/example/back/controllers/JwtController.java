@@ -19,4 +19,5 @@ public class JwtController {
         return jwtService.createJwtToken(loginRequest);
 
     }
+
 }
